@@ -1,45 +1,74 @@
 module Solver where
 
-import Data.Array.ST ((!))
-
-import Types (Sudoku(Board), Position, Value)
-
-import Helper (isEmpty, isValue, whichQuadrant)
+import Data.Sort (sortOn)
+import Data.Array.Unboxed ((!), (//))
+import Types (BoardPosition, DerivateValue, Sudoku(Board), Value)
+import Helper (derivate, isEmpty, isValidDerivate, whichQuadrant)
 
 solve :: Sudoku -> [Sudoku]
 solve board
-  | (not . isValid) board = []  
-  | isSolved board        = [board]
-  | isSolved boardFilled  = [boardFilled]
-  | otherwise             = solveds
+  | (not . isValid) board       = []  
+  | isSolved board              = [board]
+  | (not . isValid) boardFilled = []
+  | isSolved boardFilled        = [boardFilled]
+  | (not . isPosValid) pos      = [] 
+  | otherwise                   = solveds
   where
     boardFilled        = fill board
-    (position, values) = derivate boardFilled
+    pos@(position, values) = derivateValue boardFilled
     solveds            = (concatMap solve . map (place boardFilled position)) values
+    isPosValid :: DerivateValue -> Bool
+    isPosValid ((0,0), []) = False
+    isPosValid _ = True
 
 fill :: Sudoku -> Sudoku
-fill _ = error "Not implemented yet"
+fill sudoku
+  | (not . isValid) sudoku' = sudoku'
+  | sudoku == sudoku' = sudoku'
+  | otherwise = fill sudoku'
+  where
+    sudoku' = fill' sudoku
+
+fill' :: Sudoku -> Sudoku
+fill' sudoku@(Board board lins cols quads dimension shortDimension) = 
+  Board (board // changeBoard) (lins // changeLines) (cols // changeCols) (quads // changeQuads) dimension shortDimension
+  where
+    derivated = derivate sudoku
+    changePos = filter (null . (drop 1) . snd) 
+                  [((i,j), [fromIntegral k | k <- [1..dimension], derivated ! (i,j,k)]) 
+                    | i <- [1..dimension], j <- [1..dimension], 
+                      (isEmpty . fromIntegral) (board ! (i,j)) ] 
+    changeLines = [((line, fromIntegral value), False) | ((line, _), [value]) <- changePos]
+    changeCols  = [((col,  fromIntegral value),  False) | ((_, col),  [value]) <- changePos]
+    changeQuads = [((whichQuadrant (line, col) shortDimension, fromIntegral value), False) | ((line, col), [value]) <- changePos]
+    changeBoard = [((line, col), value) | ((line, col), [value]) <- changePos]
 
 isSolved :: Sudoku -> Bool
 isSolved (Board board _ _ _ dimension _) =
-  (null . filter id . map isEmpty) 
+  (null . filter isEmpty) 
     [board ! (i, j) 
-      | i <- [0..dimension], j <- [0..dimension]]
+      | i <- [1..dimension], j <- [1..dimension]]
 
 isValid :: Sudoku -> Bool
-isValid (Board board lins cols quads dimension shortDimension) =
-  null [
-    (isValue (board ! (i, j))) 
-      || (not . null . filter id) 
-           (zipWith3 (and') [lins  ! (i, k) | k <- [0..dimension]] 
-                            [cols  ! (j, k) | k <- [0..dimension]] 
-                            [quads ! (whichQuadrant (i, j) shortDimension, k) | k <- [0..dimension]])
-    | i <- [0..dimension], j <- [0..dimension]]
+isValid sudoku = 
+  (isValidDerivate sudoku . derivate) sudoku
+
+derivateValue :: Sudoku -> DerivateValue
+derivateValue sudoku@(Board board _ _ _ dimension _) =
+  (head' . sortOn (length . snd) . filter (not . null . (drop 1) . snd)) derivatedAsPositions
   where
-    and' x y z = x && y && z
+    derivated = derivate sudoku
+    derivatedAsPositions = [((i,j), [fromIntegral k | k <- [1..dimension], derivated ! (i,j,k)]) 
+                             | i <- [1..dimension], j <- [1..dimension], 
+                               (isEmpty . fromIntegral) (board ! (i,j)) ]
+    head' :: [DerivateValue] -> DerivateValue
+    head' [] = ((0,0), [])
+    head' (n:_) = n
 
-derivate :: Sudoku -> (Position, [Value])
-derivate _ = error "Not implemented yet"
-
-place :: Sudoku -> Position -> Value -> Sudoku
-place _ _ _ = error "Not implemented yet"
+place :: Sudoku -> BoardPosition -> Value -> Sudoku
+place (Board board lins cols quads dimension shortDimension) (line, col) value =
+  Board (board // [((line, col), value)]) 
+        (lins  // [((line, fromIntegral value), False)]) 
+        (cols  // [((col,  fromIntegral value), False)]) 
+        (quads // [((whichQuadrant (line, col) shortDimension,  fromIntegral value), False)])
+        dimension shortDimension
