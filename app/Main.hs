@@ -14,12 +14,12 @@ main = do
   case arguments of
     ["--help"] -> putStrLn usage
     ["-h"] -> putStrLn usage
-    _ -> case pathFromArguments arguments of
+    _ -> case optionsFromArguments arguments of
       Left message -> putStrLn message >> exitFailure
-      Right path -> processPath path
+      Right (path, maximumSolutions) -> processPath path maximumSolutions
 
-processPath :: String -> IO ()
-processPath path = do
+processPath :: String -> Int -> IO ()
+processPath path maximumSolutions = do
   result <- try (ioHelper path >>= evaluate)
     :: IO (Either IOException (Either String Sudoku))
   case result of
@@ -29,17 +29,29 @@ processPath path = do
     Right (Left message) -> do
       putStrLn ("Could not parse Sudoku: " ++ message)
       exitFailure
-    Right (Right sudoku) -> case solve sudoku of
+    Right (Right sudoku) -> case take maximumSolutions (solve sudoku) of
       [] -> putStrLn "This Sudoku has no solution."
       solutions -> mapM_ printSolution (zip [1 :: Int ..] solutions)
 
-pathFromArguments :: [String] -> Either String String
-pathFromArguments ["--path", path] = Right path
-pathFromArguments [path] = Right path
-pathFromArguments _ = Left usage
+optionsFromArguments :: [String] -> Either String (String, Int)
+optionsFromArguments ["--path", path] = Right (path, 100)
+optionsFromArguments ["--path", path, limit] = withLimit path limit
+optionsFromArguments [path] = Right (path, 100)
+optionsFromArguments [path, limit] = withLimit path limit
+optionsFromArguments _ = Left usage
+
+withLimit :: String -> String -> Either String (String, Int)
+withLimit path value = do
+  limit <- parseLimit value
+  Right (path, limit)
+
+parseLimit :: String -> Either String Int
+parseLimit value = case reads value of
+  [(limit, "")] | limit > 0 -> Right limit
+  _ -> Left ("Invalid maximum number of solutions: " ++ value ++ "\n" ++ usage)
 
 usage :: String
-usage = "Usage: lambda-sudoku --path <file.csv>\n       lambda-sudoku <file.csv>"
+usage = "Usage: lambda-sudoku --path <file.csv> [maximum-solutions]\n       lambda-sudoku <file.csv> [maximum-solutions]"
 
 printSolution :: (Int, Sudoku) -> IO ()
 printSolution (number, Board board _ _ _ dimension _) = do
