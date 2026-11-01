@@ -1,4 +1,4 @@
-module CsvReaderTest (tests) where
+module CsvReaderTest (partial4, tests) where
 
 import Data.Array.Unboxed (UArray, array, (!))
 import Data.List (transpose)
@@ -7,14 +7,14 @@ import CsvBoardReader (csvBoardReader)
 
 tests :: [(String, Bool)]
 tests =
-  [ ("Sudoku vazio 1x1", boardMatches (csvRows empty1) empty1)
-  , ("Sudoku vazio 4x4", boardMatches (csvRows empty4) empty4)
-  , ("Sudoku vazio 9x9", boardMatches (csvRows empty9) empty9)
-  , ("Sudoku completo 1x1", boardMatches (csvRows solved1) solved1)
-  , ("Sudoku completo 4x4", boardMatches (csvRows solved4) solved4)
-  , ("Sudoku completo 9x9", boardMatches (csvRows solved9) solved9)
-  , ("Sudoku parcial 4x4", boardMatches (csvRows partial4) partial4)
-  , ("Sudoku parcial 9x9", boardMatches (csvRows partial9) partial9)
+  [ ("Empty 1x1 Sudoku", boardMatches (csvRows empty1) empty1)
+  , ("Empty 4x4 Sudoku", boardMatches (csvRows empty4) empty4)
+  , ("Empty 9x9 Sudoku", boardMatches (csvRows empty9) empty9)
+  , ("Solved 1x1 Sudoku", boardMatches (csvRows solved1) solved1)
+  , ("Solved 4x4 Sudoku", boardMatches (csvRows solved4) solved4)
+  , ("Solved 9x9 Sudoku", boardMatches (csvRows solved9) solved9)
+  , ("Partially filled 4x4 Sudoku", boardMatches (csvRows partial4) partial4)
+  , ("Partially filled 9x9 Sudoku", boardMatches (csvRows partial9) partial9)
   ]
 
 boardMatches :: [String] -> Sudoku -> Bool

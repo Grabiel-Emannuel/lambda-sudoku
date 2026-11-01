@@ -1,13 +1,16 @@
 module Main (main) where
 
 import CsvReaderTest (tests)
+import qualified IOHelperTest
 
 main :: IO ()
 main = do
-  mapM_ report tests
-  if all snd tests
-    then putStrLn ("Todos os " ++ show (length tests) ++ " testes passaram.")
-    else fail "Um ou mais testes falharam."
+  fileTests <- IOHelperTest.tests
+  let allTests = tests ++ fileTests
+  mapM_ report allTests
+  if all snd allTests
+    then putStrLn ("All " ++ show (length allTests) ++ " tests passed.")
+    else fail "One or more tests failed."
   where
     report (name, passed) =
-      putStrLn ((if passed then "[OK] " else "[FALHOU] ") ++ name)
+      putStrLn ((if passed then "[OK] " else "[FAIL] ") ++ name)
