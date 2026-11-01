@@ -86,7 +86,8 @@ executable lambda-sudoku
 test-suite csv-reader-test
     type:              exitcode-stdio-1.0
     main-is:           Main.hs
-    other-modules:     CsvReaderTest, IOHelperTest, Types, CsvBoardReader, IOHelper
-    build-depends:     base ^>=4.20.2.0, array
+    other-modules:     CsvReaderTest, IOHelperTest, HelperTests, SolverTest,
+                       SudokuFixture, Types, CsvBoardReader, IOHelper, Helper, Solver
+    build-depends:     base ^>=4.20.2.0, array, sort
     hs-source-dirs:    test, app
     default-language:  Haskell2010
