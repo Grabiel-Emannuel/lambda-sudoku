@@ -14,9 +14,9 @@ solve board
   | (not . isPosValid) pos      = [] 
   | otherwise                   = solveds
   where
-    boardFilled        = fill board
+    boardFilled  = fill board
     pos@(position, values) = derivateValue boardFilled
-    solveds            = (concatMap solve . map (place boardFilled position)) values
+    solveds = concatMap (solve. place boardFilled position) values
     isPosValid :: DerivateValue -> Bool
     isPosValid ((0,0), []) = False
     isPosValid _ = True
