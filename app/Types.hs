@@ -1,6 +1,7 @@
 module Types where
 
 import Data.Array.Unboxed (UArray)
+import Control.DeepSeq (NFData(..))
 import Data.Int (Int8)
 
 type Index = Int
@@ -24,3 +25,15 @@ instance Eq Sudoku where
     (Board board' lins' cols' quads' dimension' shortDimension') =
          (board == board') && (lins == lins') && (cols == cols')
       && (quads == quads') && (dimension == dimension') && (shortDimension == shortDimension')
+
+instance NFData Sudoku where
+  rnf (Board board lins cols quads dimension shortDimension) = 
+    board `seq`
+    lins `seq`
+    cols `seq`
+    quads `seq`
+    dimension `seq`
+    shortDimension `seq`
+    ()
+
+type Workload = (Sudoku, BoardPosition, [Value])
