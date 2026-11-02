@@ -16,10 +16,11 @@ solve board
   where
     boardFilled  = fill board
     pos@(position, values) = derivateValue boardFilled
-    solveds = concatMap (solve. place boardFilled position) values
-    isPosValid :: DerivateValue -> Bool
-    isPosValid ((0,0), []) = False
-    isPosValid _ = True
+    solveds = (concat . map (solve. place boardFilled position)) values
+
+isPosValid :: DerivateValue -> Bool
+isPosValid ((0,0), []) = False
+isPosValid _ = True
 
 fill :: Sudoku -> Sudoku
 fill sudoku
