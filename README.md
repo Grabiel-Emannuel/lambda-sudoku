@@ -54,6 +54,34 @@ The main entry point is defined in `app/Main.hs`. Run the compiled executable to
 
 *To find the exact command, refer to `app/Main.hs`.*
 
+### Docker
+
+Build the image, choosing the number of parallel build jobs with `THREADS`:
+
+```bash
+docker build --build-arg THREADS=4 -t lambda-sudoku .
+```
+
+Run it with a CSV file mounted into `/data`. `DEPTH` sets the number of solver workers, `SOLUTIONS` sets the solution limit, and `THREADS` sets the number of RTS capabilities. The runtime always prints RTS statistics to standard output with `-s`.
+
+```bash
+docker run --rm \
+  -v "$(pwd)/examples:/data:ro,z" \
+  -e DEPTH=4 \
+  -e SOLUTIONS=2 \
+  -e THREADS=4 \
+  lambda-sudoku --path /data/extreme.csv
+```
+
+The environment defaults are `DEPTH=1`, `SOLUTIONS=100`, and `THREADS=1`. The first two are passed to the existing `--depth` and `--solutions` command-line options. `THREADS` controls Cabal's parallel build jobs when building the image and the RTS capabilities when running it.
+
+For Podman, `scripts/run-podman.sh` accepts these settings and the input CSV as positional arguments:
+
+```bash
+podman build -t lambda-sudoku .
+scripts/run-podman.sh 4 2 4 examples/extreme.csv
+```
+
 ## 💡 Core Logic Overview
 
 The solving process in `Solver.hs` works by:
